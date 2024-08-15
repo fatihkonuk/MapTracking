@@ -1,8 +1,7 @@
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using WebApi.Models;
 using MapTracking.Models;
+using WebApi.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MapTracking.Controllers
@@ -11,56 +10,71 @@ namespace MapTracking.Controllers
     [Route("api/[controller]")]
     public class PointController : ControllerBase
     {
-        private static readonly List<Point> _points = [];
-        private static int _count = 1;
+        private readonly IPointService _pointService;
+
+        public PointController(IPointService pointService)
+        {
+            _pointService = pointService;
+        }
 
         [HttpGet("GetAll")]
         public IActionResult GetAll()
         {
-            return Ok(_points);
+            var points = _pointService.GetAll();
+            return Ok(Response<List<Point>>.SuccessResponse(points));
         }
 
         [HttpGet("GetById/{id}")]
         public IActionResult GetById(int id)
         {
-            Point? _point = _points.FirstOrDefault(e => e.Id == id);
-            if (_point == null)
-                return NotFound();
+            var point = _pointService.GetById(id);
+            if (point == null)
+            {
+                return NotFound(Response<Point>.ErrorResponse("Point not found."));
+            }
 
-            return Ok(_point);
+            return Ok(Response<Point>.SuccessResponse(point));
         }
 
         [HttpPost("Add")]
         public IActionResult Add(Point point)
         {
-            point.Id = _count++;
-            _points.Add(point);
-            return CreatedAtAction(nameof(GetById), new { id = point.Id }, point);
+            if (point == null)
+            {
+                return BadRequest(Response<Point>.ErrorResponse("Invalid point data."));
+            }
+
+            var createdPoint = _pointService.Add(point);
+            return CreatedAtAction(nameof(GetById), new { id = createdPoint.Id }, Response<Point>.SuccessResponse(createdPoint, "Point created successfully."));
         }
 
-        [HttpPut("Update/{id}")]
+        [HttpPut("UpdateById/{id}")]
         public IActionResult UpdateById(int id, Point point)
         {
-            Point? existingPoint = _points.FirstOrDefault(e => e.Id == id);
-            if (existingPoint == null)
-                return NotFound();
+            if (point == null)
+            {
+                return BadRequest(Response<Point>.ErrorResponse("Invalid point data."));
+            }
 
-            int index = _points.IndexOf(existingPoint);
-            _points[index] = point;
-            _points[index].Id = id;
+            var updatedPoint = _pointService.UpdateById(id, point);
+            if (updatedPoint == null)
+            {
+                return NotFound(Response<Point>.ErrorResponse("Point not found."));
+            }
 
-            return Ok(_points[index]);
+            return Ok(Response<Point>.SuccessResponse(updatedPoint, "Point updated successfully."));
         }
 
-        [HttpDelete("Delete/{id}")]
+        [HttpDelete("DeleteById/{id}")]
         public IActionResult DeleteById(int id)
         {
-            Point? point = _points.FirstOrDefault(e => e.Id == id);
-            if (point == null)
-                return NotFound();
+            var result = _pointService.DeleteById(id);
+            if (!result)
+            {
+                return NotFound(Response<Point>.ErrorResponse("Point not found."));
+            }
 
-            _points.Remove(point);
-            return Ok();
+            return Ok(Response<string>.SuccessResponse(null, "Point deleted successfully."));
         }
     }
 }
