@@ -1,80 +1,111 @@
 using System.Collections.Generic;
-using WebApi.Models;
+using System.Threading.Tasks;
 using MapTracking.Models;
 using WebApi.Services;
 using Microsoft.AspNetCore.Mvc;
+using WebApi.Models;
 
 namespace MapTracking.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class PointController : ControllerBase
+    public class PointController(DbService dbService) : ControllerBase
     {
-        private readonly IPointService _pointService;
-
-        public PointController(IPointService pointService)
-        {
-            _pointService = pointService;
-        }
+        private readonly DbService _dbService = dbService;
 
         [HttpGet("GetAll")]
-        public IActionResult GetAll()
+        public async Task<IActionResult> GetAll()
         {
-            var points = _pointService.GetAll();
-            return Ok(Response<List<Point>>.SuccessResponse(points));
+            try
+            {
+                var points = await _dbService.GetAll();
+                return Ok(Response<List<Point>>.SuccessResponse(points));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, Response<List<Point>>.ErrorResponse(ex.Message));
+            }
         }
 
         [HttpGet("GetById/{id}")]
-        public IActionResult GetById(int id)
+        public async Task<IActionResult> GetById(int id)
         {
-            var point = _pointService.GetById(id);
-            if (point == null)
+            try
             {
-                return NotFound(Response<Point>.ErrorResponse("Point not found."));
-            }
+                var point = await _dbService.GetById(id);
+                if (point == null)
+                {
+                    return NotFound(Response<Point>.ErrorResponse("Nokta bulunamadı"));
+                }
 
-            return Ok(Response<Point>.SuccessResponse(point));
+                return Ok(Response<Point>.SuccessResponse(point));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, Response<Point>.ErrorResponse(ex.Message));
+            }
         }
 
         [HttpPost("Add")]
-        public IActionResult Add(Point point)
+        public async Task<IActionResult> Add(Point point)
         {
             if (point == null)
             {
-                return BadRequest(Response<Point>.ErrorResponse("Invalid point data."));
+                return BadRequest(Response<Point>.ErrorResponse("Geçersiz nokta verisi"));
             }
 
-            var createdPoint = _pointService.Add(point);
-            return CreatedAtAction(nameof(GetById), new { id = createdPoint.Id }, Response<Point>.SuccessResponse(createdPoint, "Point created successfully."));
+            try
+            {
+                var createdPoint = await _dbService.Add(point);
+                return CreatedAtAction(nameof(GetById), new { id = createdPoint.Id }, Response<Point>.SuccessResponse(createdPoint, "Yeni nokta başarıyla oluşturuldu."));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, Response<Point>.ErrorResponse(ex.Message));
+            }
         }
 
         [HttpPut("UpdateById/{id}")]
-        public IActionResult UpdateById(int id, Point point)
+        public async Task<IActionResult> UpdateById(int id, Point point)
         {
             if (point == null)
             {
-                return BadRequest(Response<Point>.ErrorResponse("Invalid point data."));
+                return BadRequest(Response<Point>.ErrorResponse("Geçersiz nokta verisi."));
             }
 
-            var updatedPoint = _pointService.UpdateById(id, point);
-            if (updatedPoint == null)
+            try
             {
-                return NotFound(Response<Point>.ErrorResponse("Point not found."));
-            }
+                var updatedPoint = await _dbService.UpdateById(id, point);
+                if (updatedPoint == null)
+                {
+                    return NotFound(Response<Point>.ErrorResponse("Nokta bulunamadı."));
+                }
 
-            return Ok(Response<Point>.SuccessResponse(updatedPoint, "Point updated successfully."));
+                return Ok(Response<Point>.SuccessResponse(updatedPoint, "Nokta başarıyla güncellendi."));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, Response<Point>.ErrorResponse(ex.Message));
+            }
         }
 
         [HttpDelete("DeleteById/{id}")]
-        public IActionResult DeleteById(int id)
+        public async Task<IActionResult> DeleteById(int id)
         {
-            var result = _pointService.DeleteById(id);
-            if (!result)
+            try
             {
-                return NotFound(Response<Point>.ErrorResponse("Point not found."));
-            }
+                var result = await _dbService.DeleteById(id);
+                if (!result)
+                {
+                    return NotFound(Response<Point>.ErrorResponse("Nokta bulunamadı."));
+                }
 
-            return Ok(Response<string>.SuccessResponse(null, "Point deleted successfully."));
+                return Ok(Response<string>.SuccessResponse(null, "Nokta başarıyla silindi."));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, Response<string>.ErrorResponse(ex.Message));
+            }
         }
     }
 }

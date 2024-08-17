@@ -8,8 +8,8 @@ namespace MapTracking.Models
     public class Point
     {
         public int Id { get; set; }
-        public int PointX { get; set; }
-        public int PointY { get; set; }
-        public string? PointName { get; set; }
+        public required string Name { get; set; }
+        public double PointX { get; set; }
+        public double PointY { get; set; }
     }
 }

@@ -280,4 +280,7 @@ obj/
 /node_modules
 /wwwroot/node_modules
 
+.DS_STORE
+*/.DS_STORE
+
 # End of https://www.toptal.com/developers/gitignore/api/aspnetcore,dotnetcore
