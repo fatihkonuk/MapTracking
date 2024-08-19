@@ -2,16 +2,16 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using MapTracking.Models;
+using WebApi.Models;
 
-namespace WebApi.Services
+namespace WebApi.Services.Interfaces
 {
     public interface IPointService
     {
-        List<Point> GetAll();
-        Point? GetById(int id);
-        Point Add(Point point);
-        Point? UpdateById(int id, Point point);
-        bool DeleteById(int id);
+        Task<IEnumerable<Point>> GetAllPointsAsync();
+        Task<Point?> GetPointByIdAsync(int id);
+        Task<Point> CreatePointAsync(Point point);
+        Task<Point?> UpdatePointAsync(Point point);
+        Task<bool> DeletePointAsync(int id);
     }
 }

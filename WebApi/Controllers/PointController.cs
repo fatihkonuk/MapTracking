@@ -1,29 +1,28 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using MapTracking.Models;
-using WebApi.Services;
-using Microsoft.AspNetCore.Mvc;
 using WebApi.Models;
+using WebApi.Services.Implementations;
+using Microsoft.AspNetCore.Mvc;
 
-namespace MapTracking.Controllers
+namespace WebApi.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class PointController(DbService dbService) : ControllerBase
+    public class PointController(PointService pointService) : ControllerBase
     {
-        private readonly DbService _dbService = dbService;
+        private readonly PointService _pointService = pointService;
 
         [HttpGet("GetAll")]
         public async Task<IActionResult> GetAll()
         {
             try
             {
-                var points = await _dbService.GetAll();
-                return Ok(Response<List<Point>>.SuccessResponse(points));
+                var points = await _pointService.GetAllPointsAsync();
+                return Ok(Response<IEnumerable<Point>>.SuccessResponse(points));
             }
             catch (Exception ex)
             {
-                return StatusCode(500, Response<List<Point>>.ErrorResponse(ex.Message));
+                return StatusCode(500, Response<IEnumerable<Point>>.ErrorResponse(ex.Message));
             }
         }
 
@@ -32,7 +31,7 @@ namespace MapTracking.Controllers
         {
             try
             {
-                var point = await _dbService.GetById(id);
+                var point = await _pointService.GetPointByIdAsync(id);
                 if (point == null)
                 {
                     return NotFound(Response<Point>.ErrorResponse("Nokta bulunamadı"));
@@ -56,7 +55,13 @@ namespace MapTracking.Controllers
 
             try
             {
-                var createdPoint = await _dbService.Add(point);
+                var newPoint = new Point()
+                {
+                    Name = point.Name,
+                    PointX = point.PointX,
+                    PointY = point.PointY
+                };
+                var createdPoint = await _pointService.CreatePointAsync(newPoint);
                 return CreatedAtAction(nameof(GetById), new { id = createdPoint.Id }, Response<Point>.SuccessResponse(createdPoint, "Yeni nokta başarıyla oluşturuldu."));
             }
             catch (Exception ex)
@@ -75,12 +80,18 @@ namespace MapTracking.Controllers
 
             try
             {
-                var updatedPoint = await _dbService.UpdateById(id, point);
-                if (updatedPoint == null)
+                var existingPoint = await _pointService.GetPointByIdAsync(id);
+
+                if (existingPoint == null)
                 {
                     return NotFound(Response<Point>.ErrorResponse("Nokta bulunamadı."));
                 }
 
+                existingPoint.Name = point.Name;
+                existingPoint.PointX = point.PointX;
+                existingPoint.PointY = point.PointY;
+
+                var updatedPoint = await _pointService.UpdatePointAsync(existingPoint);
                 return Ok(Response<Point>.SuccessResponse(updatedPoint, "Nokta başarıyla güncellendi."));
             }
             catch (Exception ex)
@@ -94,7 +105,7 @@ namespace MapTracking.Controllers
         {
             try
             {
-                var result = await _dbService.DeleteById(id);
+                var result = await _pointService.DeletePointAsync(id);
                 if (!result)
                 {
                     return NotFound(Response<Point>.ErrorResponse("Nokta bulunamadı."));

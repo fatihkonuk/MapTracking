@@ -2,58 +2,47 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using MapTracking.Models;
+using Microsoft.EntityFrameworkCore;
 using WebApi.Models;
-using WebApi.Services;
+using WebApi.Services.Interfaces;
 
-namespace WebApi.Services
+namespace WebApi.Services.Implementations
 {
-    public class PointService : IPointService
+    public class PointService(DbService dbService) : IPointService
     {
-        private static readonly List<Point> _points = [];
-        private static int _count = 1;
+        private readonly DbService _dbService = dbService;
 
-        public List<Point> GetAll()
+        public async Task<IEnumerable<Point>> GetAllPointsAsync()
         {
-            return _points;
+            return await _dbService.Points.ToListAsync();
         }
 
-        public Point? GetById(int id)
+        public async Task<Point?> GetPointByIdAsync(int id)
         {
-            Point? _point = _points.FirstOrDefault(e => e.Id == id);
-            if (_point == null)
-                return null;
-
-            return _point;
+            return await _dbService.Points.FindAsync(id);
         }
-        public Point Add(Point point)
+
+        public async Task<Point> CreatePointAsync(Point point)
         {
-            point.Id = _count++;
-            _points.Add(point);
+            _dbService.Points.Add(point);
+            await _dbService.SaveChangesAsync();
             return point;
         }
-
-        public bool DeleteById(int id)
+        public async Task<Point?> UpdatePointAsync(Point updatedPoint)
         {
-            Point? point = _points.FirstOrDefault(e => e.Id == id);
-            if (point == null)
+            _dbService.Points.Update(updatedPoint);
+            await _dbService.SaveChangesAsync();
+            return updatedPoint;
+        }
+        public async Task<bool> DeletePointAsync(int id)
+        {
+            var product = await _dbService.Points.FindAsync(id);
+            if (product == null)
                 return false;
 
-            _points.Remove(point);
+            _dbService.Points.Remove(product);
+            await _dbService.SaveChangesAsync();
             return true;
-        }
-
-        public Point? UpdateById(int id, Point point)
-        {
-            Point? existingPoint = _points.FirstOrDefault(e => e.Id == id);
-            if (existingPoint == null)
-                return null;
-
-            int index = _points.IndexOf(existingPoint);
-            _points[index] = point;
-            _points[index].Id = id;
-
-            return _points[index];
         }
     }
 }
