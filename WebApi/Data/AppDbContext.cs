@@ -2,12 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using WebApi.Models;
 using Microsoft.EntityFrameworkCore;
+using WebApi.Models;
 
-namespace WebApi.Services.Implementations
+namespace WebApi.Data
 {
-    public class DbService(DbContextOptions<DbService> options) : DbContext(options)
+    public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
     {
         public DbSet<Point> Points { get; set; }
     }

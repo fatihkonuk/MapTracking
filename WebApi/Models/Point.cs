@@ -6,11 +6,8 @@ using System.Threading.Tasks;
 
 namespace WebApi.Models
 {
-    public class Point
+    public class Point : BaseEntity
     {
-        [Key]
-        public int Id { get; set; }
-
         [Required]
         public required string Name { get; set; }
         public double PointX { get; set; }

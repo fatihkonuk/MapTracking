@@ -1,23 +1,25 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
-using WebApi.Models;
-using WebApi.Services.Implementations;
 using Microsoft.AspNetCore.Mvc;
+using WebApi.Models;
+using WebApi.Services.Interfaces;
 
 namespace WebApi.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class PointController(PointService pointService) : ControllerBase
+    public class PointController(IGenericRepository<Point> pointService) : ControllerBase
     {
-        private readonly PointService _pointService = pointService;
+        private readonly IGenericRepository<Point> _pointService = pointService;
 
         [HttpGet("GetAll")]
         public async Task<IActionResult> GetAll()
         {
             try
             {
-                var points = await _pointService.GetAllPointsAsync();
+                var points = await _pointService.GetAllAsync();
                 return Ok(Response<IEnumerable<Point>>.SuccessResponse(points));
             }
             catch (Exception ex)
@@ -31,7 +33,7 @@ namespace WebApi.Controllers
         {
             try
             {
-                var point = await _pointService.GetPointByIdAsync(id);
+                var point = await _pointService.GetByIdAsync(id);
                 if (point == null)
                 {
                     return NotFound(Response<Point>.ErrorResponse("Nokta bulunamadı"));
@@ -61,7 +63,8 @@ namespace WebApi.Controllers
                     PointX = point.PointX,
                     PointY = point.PointY
                 };
-                var createdPoint = await _pointService.CreatePointAsync(newPoint);
+                var createdPoint = await _pointService.AddAsync(newPoint);
+
                 return CreatedAtAction(nameof(GetById), new { id = createdPoint.Id }, Response<Point>.SuccessResponse(createdPoint, "Yeni nokta başarıyla oluşturuldu."));
             }
             catch (Exception ex)
@@ -71,7 +74,7 @@ namespace WebApi.Controllers
         }
 
         [HttpPut("UpdateById/{id}")]
-        public async Task<IActionResult> UpdateById(int id, Point point)
+        public async Task<IActionResult> UpdateById(int id, [FromBody] Point point)
         {
             if (point == null)
             {
@@ -80,18 +83,18 @@ namespace WebApi.Controllers
 
             try
             {
-                var existingPoint = await _pointService.GetPointByIdAsync(id);
-
+                var existingPoint = await _pointService.GetByIdAsync(id);
                 if (existingPoint == null)
                 {
-                    return NotFound(Response<Point>.ErrorResponse("Nokta bulunamadı."));
+                    return NotFound(Response<Point>.ErrorResponse("Güncellenecek nokta bulunamadı."));
                 }
 
+                // Mevcut veriyi güncelle
                 existingPoint.Name = point.Name;
                 existingPoint.PointX = point.PointX;
                 existingPoint.PointY = point.PointY;
 
-                var updatedPoint = await _pointService.UpdatePointAsync(existingPoint);
+                var updatedPoint = await _pointService.UpdateAsync(existingPoint);
                 return Ok(Response<Point>.SuccessResponse(updatedPoint, "Nokta başarıyla güncellendi."));
             }
             catch (Exception ex)
@@ -105,10 +108,16 @@ namespace WebApi.Controllers
         {
             try
             {
-                var result = await _pointService.DeletePointAsync(id);
+                var point = await _pointService.GetByIdAsync(id);
+                if (point == null)
+                {
+                    return NotFound(Response<Point>.ErrorResponse("Nokta bulunamadı"));
+                }
+
+                var result = await _pointService.DeleteAsync(point);
                 if (!result)
                 {
-                    return NotFound(Response<Point>.ErrorResponse("Nokta bulunamadı."));
+                    return NotFound(Response<Point>.ErrorResponse("Nokta silinirken bir hata oluştu."));
                 }
 
                 return Ok(Response<string>.SuccessResponse(null, "Nokta başarıyla silindi."));
