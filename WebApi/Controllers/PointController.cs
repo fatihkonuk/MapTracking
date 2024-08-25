@@ -10,16 +10,16 @@ namespace WebApi.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class PointController(IGenericRepository<Point> pointService) : ControllerBase
+    public class PointController(IUnitOfWork unitOfWork) : ControllerBase
     {
-        private readonly IGenericRepository<Point> _pointService = pointService;
+        private readonly IUnitOfWork _unitOfWork = unitOfWork;
 
         [HttpGet("GetAll")]
         public async Task<IActionResult> GetAll()
         {
             try
             {
-                var points = await _pointService.GetAllAsync();
+                var points = await _unitOfWork.Repository<Point>().GetAllAsync();
                 return Ok(Response<IEnumerable<Point>>.SuccessResponse(points));
             }
             catch (Exception ex)
@@ -33,7 +33,7 @@ namespace WebApi.Controllers
         {
             try
             {
-                var point = await _pointService.GetByIdAsync(id);
+                var point = await _unitOfWork.Repository<Point>().GetByIdAsync(id);
                 if (point == null)
                 {
                     return NotFound(Response<Point>.ErrorResponse("Nokta bulunamadı"));
@@ -63,7 +63,8 @@ namespace WebApi.Controllers
                     PointX = point.PointX,
                     PointY = point.PointY
                 };
-                var createdPoint = await _pointService.AddAsync(newPoint);
+                var createdPoint = await _unitOfWork.Repository<Point>().AddAsync(point);
+                await _unitOfWork.CompleteAsync();
 
                 return CreatedAtAction(nameof(GetById), new { id = createdPoint.Id }, Response<Point>.SuccessResponse(createdPoint, "Yeni nokta başarıyla oluşturuldu."));
             }
@@ -83,7 +84,7 @@ namespace WebApi.Controllers
 
             try
             {
-                var existingPoint = await _pointService.GetByIdAsync(id);
+                var existingPoint = await _unitOfWork.Repository<Point>().GetByIdAsync(id);
                 if (existingPoint == null)
                 {
                     return NotFound(Response<Point>.ErrorResponse("Güncellenecek nokta bulunamadı."));
@@ -94,7 +95,8 @@ namespace WebApi.Controllers
                 existingPoint.PointX = point.PointX;
                 existingPoint.PointY = point.PointY;
 
-                var updatedPoint = await _pointService.UpdateAsync(existingPoint);
+                var updatedPoint = await _unitOfWork.Repository<Point>().UpdateAsync(existingPoint);
+                await _unitOfWork.CompleteAsync();
                 return Ok(Response<Point>.SuccessResponse(updatedPoint, "Nokta başarıyla güncellendi."));
             }
             catch (Exception ex)
@@ -108,13 +110,14 @@ namespace WebApi.Controllers
         {
             try
             {
-                var point = await _pointService.GetByIdAsync(id);
+                var point = await _unitOfWork.Repository<Point>().GetByIdAsync(id);
                 if (point == null)
                 {
                     return NotFound(Response<Point>.ErrorResponse("Nokta bulunamadı"));
                 }
 
-                var result = await _pointService.DeleteAsync(point);
+                var result = await _unitOfWork.Repository<Point>().DeleteAsync(point);
+                await _unitOfWork.CompleteAsync();
                 if (!result)
                 {
                     return NotFound(Response<Point>.ErrorResponse("Nokta silinirken bir hata oluştu."));
