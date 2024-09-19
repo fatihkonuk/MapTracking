@@ -24,12 +24,12 @@ namespace WebApi.Models
             Error = error;
         }
 
-        public static Response<T> SuccessResponse(T? data, string message = "İşlem başarılı.")
+        public static Response<T> SuccessResponse(T? data, string message = "Success")
         {
             return new Response<T>(true, message, data);
         }
 
-        public static Response<T> ErrorResponse(string error, string message = "Bir hata oluştu")
+        public static Response<T> ErrorResponse(string error, string message = "An error occurred")
         {
             return new Response<T>(false, message, error: error);
         }

@@ -6,11 +6,13 @@ using System.Threading.Tasks;
 
 namespace WebApi.Models
 {
-    public class Point : BaseEntity
+    public class Feature : BaseEntity
     {
         [Required]
         public required string Name { get; set; }
-        public double PointX { get; set; }
-        public double PointY { get; set; }
+        [Required]
+        public required string WKT { get; set; }
+        [Required]
+        public required int UserId { get; set; }
     }
 }

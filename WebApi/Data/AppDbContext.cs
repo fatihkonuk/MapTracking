@@ -9,6 +9,7 @@ namespace WebApi.Data
 {
     public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
     {
-        public DbSet<Point> Points { get; set; }
+        public DbSet<Feature> Features { get; set; }
+        public DbSet<User> Users { get; set; }
     }
 }

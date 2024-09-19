@@ -11,19 +11,9 @@ namespace WebApi.Services.Implementations
     public class UnitOfWork(AppDbContext context) : IUnitOfWork, IDisposable
     {
         private readonly AppDbContext _context = context;
-        private readonly Dictionary<Type, object> _repositories = [];
 
-        public IGenericRepository<TEntity> Repository<TEntity>() where TEntity : BaseEntity
-        {
-            if (_repositories.ContainsKey(typeof(TEntity)))
-            {
-                return (IGenericRepository<TEntity>)_repositories[typeof(TEntity)];
-            }
-
-            var repository = new GenericRepository<TEntity>(_context);
-            _repositories[typeof(TEntity)] = repository;
-            return repository;
-        }
+        public UserRepository UserRepository { get; private set; } = new UserRepository(context);
+        public FeatureRepository FeatureRepository { get; private set; } = new FeatureRepository(context);
 
         public async Task CompleteAsync()
         {
