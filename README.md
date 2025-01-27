@@ -4,8 +4,6 @@
 
 Bu proje, MapTracking uygulamasının backend kısmıdır ve .NET Web API kullanılarak geliştirilmiştir.
 
-Proje tanıtım videosu: https://www.youtube.com/watch?v=O-LpAGU4PMI
-
 ## Özellikler
 - JWT tabanlı kimlik doğrulama
 - Harita özelliklerinin yönetimi (ekleme, güncelleme, silme)
